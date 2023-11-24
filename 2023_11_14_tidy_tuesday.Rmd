@@ -1,0 +1,43 @@
+---
+title: "2023_11_14_tidy_tuesday"
+author: "David Harper"
+date: "2023-11-13"
+output: html_document
+---
+
+```{r}
+#Project Plan: Conduct stepwise regression analysis to identify variables that predict total amount spent; create shiny dashboard to highligh only those variables
+
+#Load packages and data
+library(tidyverse)
+
+#Load the data
+diwali <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2023/2023-11-14/diwali_sales_data.csv')
+
+#Group by user because there are multiple rows per user
+diwali_total_plus <- diwali %>%
+  group_by(User_ID, Gender, Age, Marital_Status, Product_Category, Occupation) %>%
+  summarise(total_amount = sum(Amount)) %>%
+  ungroup() %>%
+  select(Gender, Age, Marital_Status, Product_Category, Occupation, total_amount)
+
+#Ensure categorical variables are treated as factors
+diwali_total_plus$Gender = as.factor(diwali_total_plus$Gender)
+diwali_total_plus$Occupation = as.factor(diwali_total_plus$Occupation)
+diwali_total_plus$Product_Category = as.factor(diwali_total_plus$Product_Category)
+
+
+library(MASS)
+fullModel = lm(total_amount ~ ., data = diwali_total_plus) # model with all 9 variables
+nullModel = lm(total_amount ~ 1, data = diwali_total_plus) # model with the intercept only
+summary(stepAIC(fullModel, # start with a model containing all the variables
+                direction = 'backward', # run backward selection
+                scope = list(upper = fullModel, # the maximum to consider is a model with all variables
+                             lower = nullModel), # the minimum to consider is a model with no variables
+                trace = 0)) # do not show the step-by-step process of model selection
+
+#Result: Adjusted r-squared of .59 with just Gender and Product_category as lone predictors
+
+```
+
+

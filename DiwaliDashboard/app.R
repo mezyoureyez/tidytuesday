@@ -53,14 +53,20 @@ server <- function(input, output) {
       ungroup()
     
     # Extract colors from the RColorBrewer package
-    colors <- brewer.pal(6, "Paired")
+    colors <- RColorBrewer::brewer.pal(3, "Paired")[1:2]
     
     # Create a bar graph with different colors for male and female
     ggplot(average_amount_by_gender, aes(x = Gender, y = average_amount)) +
       geom_bar(aes(fill = Gender), stat = "identity") +
       scale_fill_manual(values = colors) +
       labs(title = "Average Amount Spent by Gender", x = "Gender", y = "Average Amount Spent") +
-      theme_bw()
+      theme_bw() +
+      theme(
+        text = element_text(size = 12),  # Set the base font size
+        axis.title = element_text(size = 14),  # Set the axis title font size
+        axis.text = element_text(size = 12),  # Set the axis labels font size
+        plot.title = element_text(size = 16, face = "bold")  # Set the plot title font size and style
+      )
     
   })
 }

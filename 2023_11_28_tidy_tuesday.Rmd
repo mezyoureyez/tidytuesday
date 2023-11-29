@@ -1,0 +1,69 @@
+---
+title: "Dr. Who"
+author: "David Harper"
+date: "2023-11-28"
+output: html_document
+---
+
+
+```{r}
+#Load packages and data
+library(tidyverse)
+library(grid)
+dr_who <- tidytuesdayR::tt_load('2023-11-28')
+
+drwho_episodes <- dr_who$drwho_episodes
+drwho_directors <- dr_who$drwho_directors
+drwho_writers <- dr_who$drwho_writers
+
+# Combine the three data frames
+
+merged_dr_who <- merge(merge(drwho_episodes, drwho_directors, by = "story_number", all = TRUE), drwho_writers, by = "story_number", all = TRUE)
+
+# Group by director and calculate the number of episodes directed, min_rating, and max_rating
+director_counts <- merged_dr_who %>%
+  group_by(director) %>%
+  summarise(
+    episodes_count = n(),
+    min_rating = min(rating),
+    max_rating = max(rating)
+  ) %>% mutate(director = fct_reorder(director,max_rating))
+
+
+# Select the top 10 directors with the most episodes
+top_directors <- director_counts %>%
+  top_n(10, episodes_count)
+
+# Filter the original episode data for only the episodes directed by the top directors
+filtered_data <- merged_dr_who %>%
+  filter(director %in% top_directors$director)
+
+library(jpeg)
+# Load the JPEG image
+background_image <- readJPEG("dr_who3.jpeg")
+
+# Create a rasterGrob with transparency
+transparent_background <- rasterGrob(
+  image = background_image,
+  interpolate = TRUE
+)
+
+# Create the dumbbell plot
+dumbbell_plot <- ggplot(top_directors, aes(y = director)) +
+  annotation_custom(
+    transparent_background,
+    xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf
+  ) +
+  geom_point(aes(x = min_rating), color = "red") +
+  geom_point(aes(x = max_rating), color = "gold") +
+  geom_segment(aes(x = min_rating, xend = max_rating, yend = director)) +
+  labs(x = "Rating", y = "Director", title= "Minimum and Maximum Ratings for Top Dr. Who Directors") +
+  coord_fixed(ratio = .72)  +
+  theme( plot.title = element_text(face = "bold", size = 14),
+    axis.title = element_text(face = "bold")
+)
+# Print the dumbbell plot
+print(dumbbell_plot)
+
+```
+
